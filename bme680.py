@@ -1,11 +1,11 @@
 import math
 import time
 
-from . import i2c
-from . import constants
-from .constants import lookupTable1, lookupTable2
-from .tools import twos_comp
-from .data_structures import FieldData, CalibrationData, TPHSettings, GasSettings
+import i2c
+import constants
+from constants import lookupTable1, lookupTable2
+from tools import twos_comp
+from data_structures import FieldData, CalibrationData, TPHSettings, GasSettings
 
 
 class BME680:

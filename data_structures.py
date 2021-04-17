@@ -1,7 +1,7 @@
 # BME680 data structures
 
-from . import constants
-from .tools import twos_comp, bytes_to_word
+import constants
+from tools import twos_comp, bytes_to_word
 
 
 class FieldData:
