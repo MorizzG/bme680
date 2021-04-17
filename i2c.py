@@ -23,7 +23,7 @@ class I2C:
         if data << pos > 0xFF:
             raise ValueError("Tried to set higher bit than 7")
 
-        val = self.read_bytes(reg)
+        val = self.read_byte(reg)
 
         if mask is None:
             val &= ~(1 << pos)
@@ -41,4 +41,4 @@ class I2C:
             return bus.read_byte_data(self.addr, reg)
 
     def read_bytes(self, reg, len):
-        bus.read_i2c_block_data(self.addr, reg, len)
+        return bus.read_i2c_block_data(self.addr, reg, len)

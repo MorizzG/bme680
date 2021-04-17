@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from bme680 import BME680
 
 bme = BME680()

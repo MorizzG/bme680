@@ -33,7 +33,7 @@ class BME680:
         # New sensor fields
         self.new_fields = None
 
-        self.i2c = i2c(i2c_addr)
+        self.i2c = i2c.I2C(i2c_addr)
         self.set_power_mode(constants.SLEEP_MODE)
 
         self._get_calibration_data()
@@ -56,16 +56,16 @@ class BME680:
         calibration = self.i2c.read_bytes(constants.COEFF_ADDR1, constants.COEFF_ADDR1_LEN)
         calibration += self.i2c.read_bytes(constants.COEFF_ADDR2, constants.COEFF_ADDR2_LEN)
 
-        heat_range = self.i2c.read_bytes(constants.ADDR_RES_HEAT_RANGE_ADDR, 1)
+        heat_range = self.i2c.read_byte(constants.ADDR_RES_HEAT_RANGE_ADDR)
         heat_value = twos_comp(self.i2c.read_byte(constants.ADDR_RES_HEAT_VAL_ADDR), bits=8)
-        sw_error = twos_comp(self.read_byte(constants.ADDR_RANGE_SW_ERR_ADDR), bits=8)
+        sw_error = twos_comp(self.i2c.read_byte(constants.ADDR_RANGE_SW_ERR_ADDR), bits=8)
 
         self.calibration_data.set_from_array(calibration)
         self.calibration_data.set_other(heat_range, heat_value, sw_error)
 
     def get_humidity_oversample(self):
         """Get humidity oversampling."""
-        return (self.read_byte(constants.CONF_OS_H_ADDR) & constants.OSH_MSK) >> constants.OSH_POS
+        return (self.i2c.read_byte(constants.CONF_OS_H_ADDR) & constants.OSH_MSK) >> constants.OSH_POS
 
     def set_humidity_oversample(self, value):
         """Set humidity oversampling.
@@ -85,7 +85,7 @@ class BME680:
     def get_pressure_oversample(self):
         """Get pressure oversampling."""
         return (
-            self.read_byte(constants.CONF_T_P_MODE_ADDR) & constants.OSP_MSK
+            self.i2c.read_byte(constants.CONF_T_P_MODE_ADDR) & constants.OSP_MSK
         ) >> constants.OSP_POS
 
     def set_pressure_oversample(self, value):
@@ -101,12 +101,12 @@ class BME680:
 
         """
         self.tph_settings.os_pres = value
-        self.write_bits(value, constants.CONF_T_P_MODE_ADDR, constants.OSP_POS, constants.OSP_MSK)
+        self.i2c.write_bits(value, constants.CONF_T_P_MODE_ADDR, constants.OSP_POS, constants.OSP_MSK)
 
     def get_temperature_oversample(self):
         """Get temperature oversampling."""
         return (
-            self.read_byte(constants.CONF_T_P_MODE_ADDR) & constants.OST_MSK
+            self.i2c.read_byte(constants.CONF_T_P_MODE_ADDR) & constants.OST_MSK
         ) >> constants.OST_POS
 
     def set_temperature_oversample(self, value):
@@ -122,12 +122,12 @@ class BME680:
 
         """
         self.tph_settings.os_temp = value
-        self.write_bits(value, constants.CONF_T_P_MODE_ADDR, constants.OST_POS, constants.OST_MSK)
+        self.i2c.write_bits(value, constants.CONF_T_P_MODE_ADDR, constants.OST_POS, constants.OST_MSK)
 
     def get_filter(self):
         """Get filter size."""
         return (
-            self.read_byte(constants.CONF_ODR_FILT_ADDR) & constants.FILTER_MSK
+            self.i2c.read_byte(constants.CONF_ODR_FILT_ADDR) & constants.FILTER_MSK
         ) >> constants.FILTER_POS
 
     def set_filter(self, value):
@@ -144,7 +144,7 @@ class BME680:
 
         """
         self.tph_settings.filter = value
-        self.write_bits(
+        self.i2c.write_bits(
             value, constants.CONF_ODR_FILT_ADDR, constants.FILTER_POS, constants.FILTER_MSK
         )
 
@@ -168,7 +168,7 @@ class BME680:
 
     def get_gas_heater_profile(self):
         """Get gas sensor conversion profile: 0 to 9."""
-        return self.read_byte(constants.CONF_ODR_RUN_GAS_NBC_ADDR) & constants.NBCONV_MSK
+        return self.i2c.read_byte(constants.CONF_ODR_RUN_GAS_NBC_ADDR) & constants.NBCONV_MSK
 
     def set_gas_heater_profile(self, temperature, duration, nb_profile=0):
         """Set temperature and duration of gas sensor heater.
@@ -184,13 +184,13 @@ class BME680:
     def get_gas_status(self):
         """Get the current gas status."""
         return (
-            self.read_byte(constants.CONF_ODR_RUN_GAS_NBC_ADDR) & constants.RUN_GAS_MSK
+            self.i2c.read_byte(constants.CONF_ODR_RUN_GAS_NBC_ADDR) & constants.RUN_GAS_MSK
         ) >> constants.RUN_GAS_POS
 
     def set_gas_status(self, value):
         """Enable/disable gas sensor."""
         self.gas_settings.run_gas = value
-        self.write_bits(
+        self.i2c.write_bits(
             value, constants.CONF_ODR_RUN_GAS_NBC_ADDR, constants.RUN_GAS_POS, constants.RUN_GAS_MSK
         )
 
@@ -277,13 +277,13 @@ class BME680:
         self.set_power_mode(constants.FORCED_MODE)
 
         for attempt in range(10):
-            status = self.read_byte(constants.FIELD0_ADDR)
+            status = self.i2c.read_byte(constants.FIELD0_ADDR)
 
             if (status & constants.NEW_DATA_MSK) == 0:
                 time.sleep(constants.POLL_PERIOD_MS / 1000.0)
                 continue
 
-            regs = self.read_bytes(constants.FIELD0_ADDR, constants.FIELD_LENGTH)
+            regs = self.i2c.read_bytes(constants.FIELD0_ADDR, constants.FIELD_LENGTH)
 
             self.data.status = regs[0] & constants.NEW_DATA_MSK
             # Contains the nb_profile used to obtain the current measurement
